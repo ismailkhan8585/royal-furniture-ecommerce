@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Font Variables */
+:root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-noto-urdu: 'Noto Nastaliq Urdu', Arial, sans-serif;
+}
+
+@layer base {
+  :root {
+    /* Royal Furniture Brand Colors */
+    --background: 40 33% 98%;
+    --foreground: 30 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 30 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 25% 10%;
+
+    /* Primary: Walnut Brown */
+    --primary: 30 47% 25%;
+    --primary-foreground: 40 33% 97%;
+
+    /* Secondary: Silver */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 30 25% 25%;
+
+    /* Muted: Warm Ivory */
+    --muted: 40 33% 96%;
+    --muted-foreground: 30 15% 45%;
+
+    /* Accent: Gold */
+    --accent: 43 74% 49%;
+    --accent-foreground: 30 47% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 20% 90%;
+    --input: 30 20% 90%;
+    --ring: 30 47% 25%;
+
+    --chart-1: 30 47% 25%;
+    --chart-2: 43 74% 49%;
+    --chart-3: 0 0% 75%;
+    --chart-4: 30 30% 50%;
+    --chart-5: 43 50% 40%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 30 35% 8%;
+    --foreground: 40 33% 95%;
+
+    --card: 30 30% 12%;
+    --card-foreground: 40 33% 95%;
+
+    --popover: 30 30% 10%;
+    --popover-foreground: 40 33% 95%;
+
+    /* Primary: Lighter Walnut for dark mode */
+    --primary: 30 35% 60%;
+    --primary-foreground: 30 35% 8%;
+
+    --secondary: 30 20% 18%;
+    --secondary-foreground: 40 33% 90%;
+
+    --muted: 30 20% 15%;
+    --muted-foreground: 30 15% 60%;
+
+    /* Accent: Gold stays vibrant */
+    --accent: 43 74% 55%;
+    --accent-foreground: 30 35% 8%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 30 20% 20%;
+    --input: 30 20% 20%;
+    --ring: 30 35% 60%;
+
+    --chart-1: 30 35% 60%;
+    --chart-2: 43 74% 55%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 30 30% 45%;
+    --chart-5: 43 50% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text text-transparent;
+  }
+
+  .bg-walnut-gradient {
+    @apply bg-gradient-to-br from-walnut-800 to-walnut-950;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  .btn-primary {
+    @apply bg-walnut-600 text-white hover:bg-walnut-700 active:bg-walnut-800 transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-secondary text-walnut-700 border border-surface-border hover:bg-surface-tertiary hover:border-surface-borderHover transition-colors duration-200;
+  }
+
+  .btn-gold {
+    @apply bg-gold-500 text-walnut-900 hover:bg-gold-600 active:bg-gold-700 transition-colors duration-200;
+  }
+
+  .section-heading {
+    @apply font-display text-3xl md:text-4xl font-bold text-walnut-800 dark:text-walnut-200;
+  }
+
+  .section-subheading {
+    @apply text-walnut-600 dark:text-walnut-400 text-lg;
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(250 247 242);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(184 154 117);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(140 102 68);
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgb(28 20 16);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(92 58 33);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(140 102 68);
+}
