@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CustomOrderFormData, customOrderFormSchema } from '@/lib/validations';
@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { ROOM_TYPES, BUDGET_RANGES, PAKISTANI_CITIES, WHATSAPP_URL } from '@/lib/constants';
 import { toast } from 'sonner';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 const steps = [
   { id: 1, name: 'Describe', description: 'Tell us about your furniture' },
@@ -39,6 +40,7 @@ const steps = [
 ];
 
 export default function CustomOrdersPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestRef, setRequestRef] = useState<string | null>(null);
@@ -66,44 +68,25 @@ export default function CustomOrdersPage() {
     },
   });
 
-  const generateRequestRef = () => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 90000) + 10000;
-    return `CUS-${year}-${random}`;
-  };
-
   const onSubmit = async (data: CustomOrderFormData) => {
     setIsSubmitting(true);
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      const response = await fetch('/api/custom-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          referenceImages: uploadedImages,
+        }),
+      });
+      const result = await response.json();
 
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Configuration error');
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to submit request');
       }
 
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const ref = generateRequestRef();
-
-      const { error } = await supabase.from('custom_order_requests').insert({
-        request_ref: ref,
-        furniture_type: data.furnitureType,
-        room_type: data.roomType || null,
-        material: data.material || null,
-        budget_range: data.budgetRange || null,
-        dimensions: data.dimensions || null,
-        description: data.description || null,
-        reference_images: uploadedImages,
-        customer_name: data.customerName,
-        customer_phone: data.customerPhone,
-        city: data.city,
-        status: 'PENDING',
-      });
-
-      if (error) throw error;
-
-      setRequestRef(ref);
+      setRequestRef(result.data.requestRef);
       setStep(4); // Success step
       toast.success('Custom order request submitted successfully!');
     } catch (error) {
@@ -134,7 +117,7 @@ export default function CustomOrdersPage() {
         setValue('referenceImages', [...uploadedImages, data.url]);
         toast.success('Image uploaded successfully');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to upload image');
     }
   };
@@ -169,7 +152,7 @@ export default function CustomOrdersPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button
                   variant="outline"
-                  onClick={() => (window.location.href = '/')}
+                  onClick={() => router.push('/')}
                 >
                   Back to Home
                 </Button>
@@ -356,11 +339,14 @@ export default function CustomOrdersPage() {
                       {uploadedImages.length > 0 && (
                         <div className="flex gap-2 mt-3 flex-wrap">
                           {uploadedImages.map((url, idx) => (
-                            <img
+                            <SafeImage
                               key={idx}
                               src={url}
                               alt={`Reference ${idx + 1}`}
-                              className="w-20 h-20 object-cover rounded-lg"
+                              width={80}
+                              height={80}
+                              sizes="80px"
+                              className="h-20 w-20 rounded-lg object-cover"
                             />
                           ))}
                         </div>

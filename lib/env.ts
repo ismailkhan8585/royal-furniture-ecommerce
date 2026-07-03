@@ -3,10 +3,6 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Database
   DATABASE_URL: z.string().url().optional(),
-  SUPABASE_URL: z.string().url().optional(),
-  SUPABASE_ANON_KEY: z.string().optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-  SUPABASE_DB_URL: z.string().url().optional(),
 
   // NextAuth
   NEXTAUTH_SECRET: z.string().min(1, 'NEXTAUTH_SECRET is required'),
@@ -56,10 +52,6 @@ function parseEnv() {
   try {
     return envSchema.parse({
       DATABASE_URL: process.env.DATABASE_URL,
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-      SUPABASE_DB_URL: process.env.SUPABASE_DB_URL,
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || 'demo',

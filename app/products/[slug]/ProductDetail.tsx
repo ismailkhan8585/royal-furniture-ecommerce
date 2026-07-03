@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@supabase/supabase-js';
 import { Product, Review } from '@/lib/database.types';
 import { CATEGORY_LABELS, CATEGORY_SLUGS } from '@/lib/constants';
 import { formatPrice } from '@/lib/currency';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Heart,
@@ -27,17 +24,24 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProductCard } from '@/components/products/ProductCard';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 interface ProductDetailProps {
   product: Product;
+  initialReviews: Review[];
+  initialSimilarProducts: Product[];
 }
 
-export function ProductDetail({ product }: ProductDetailProps) {
+export function ProductDetail({
+  product,
+  initialReviews,
+  initialSimilarProducts,
+}: ProductDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
+  const [reviews] = useState<Review[]>(initialReviews);
+  const [similarProducts] = useState<Product[]>(initialSimilarProducts);
 
   const isFixedPrice = product.price_type === 'FIXED';
   const isInStock = product.stock_type === 'IN_STOCK' && product.stock > 0;
@@ -56,41 +60,6 @@ export function ProductDetail({ product }: ProductDetailProps) {
       setIsWishlisted(false);
     }
   }, [product.id]);
-
-  // Fetch reviews and similar products
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-      if (!supabaseUrl || !supabaseKey) return;
-
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      // Fetch approved reviews
-      const { data: reviewsData } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('product_id', product.id)
-        .eq('is_approved', true)
-        .order('created_at', { ascending: false });
-
-      setReviews(reviewsData || []);
-
-      // Fetch similar products from same category
-      const { data: similarData } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .eq('category', product.category)
-        .neq('id', product.id)
-        .limit(6);
-
-      setSimilarProducts(similarData || []);
-    };
-
-    fetchData();
-  }, [product.id, product.category]);
 
   const toggleWishlist = () => {
     try {
@@ -178,10 +147,13 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative aspect-square bg-white dark:bg-walnut-950 rounded-xl overflow-hidden border border-walnut-100 dark:border-walnut-800">
-              <img
-                src={product.photos[selectedImage] || '/placeholder.png'}
+              <SafeImage
+                src={product.photos[selectedImage]}
                 alt={product.name}
-                className="w-full h-full object-contain"
+                fill
+                priority
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-contain"
               />
               {/* Navigation Arrows */}
               {product.photos.length > 1 && (
@@ -236,10 +208,13 @@ export function ProductDetail({ product }: ProductDetailProps) {
                         : 'border-walnut-100 hover:border-walnut-300'
                     )}
                   >
-                    <img
+                    <SafeImage
                       src={photo}
                       alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      width={64}
+                      height={64}
+                      sizes="64px"
+                      className="h-full w-full object-cover"
                     />
                   </button>
                 ))}
@@ -313,13 +288,13 @@ export function ProductDetail({ product }: ProductDetailProps) {
               {isInStock && (
                 <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium">
                   <Package className="w-4 h-4" />
-                  In Stock — Ships in 3-5 days
+                  In Stock - Ships in 3-5 days
                 </span>
               )}
               {isMadeToOrder && (
                 <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-sm font-medium">
                   <Wrench className="w-4 h-4" />
-                  Made to Order — 2-3 weeks delivery
+                  Made to Order - 2-3 weeks delivery
                 </span>
               )}
               {product.stock_type === 'OUT_OF_STOCK' && (

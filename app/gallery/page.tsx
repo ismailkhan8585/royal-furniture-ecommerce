@@ -1,7 +1,10 @@
 import { Metadata } from 'next';
-import { createClient } from '@supabase/supabase-js';
 import { GalleryImage } from '@/lib/database.types';
+import { serializeGalleryImage } from '@/lib/db-serializers';
+import { prisma } from '@/lib/prisma';
 import { GalleryClient } from './GalleryClient';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Gallery | Royal Furniture',
@@ -10,26 +13,16 @@ export const metadata: Metadata = {
 };
 
 async function getGalleryImages(): Promise<GalleryImage[]> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  try {
+    const images = await prisma.galleryImage.findMany({
+      orderBy: { sort_order: 'asc' },
+    });
 
-  if (!supabaseUrl || !supabaseKey) {
-    return [];
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { data, error } = await supabase
-    .from('gallery_images')
-    .select('*')
-    .order('sort_order', { ascending: true });
-
-  if (error) {
+    return images.map(serializeGalleryImage);
+  } catch (error) {
     console.error('Error fetching gallery images:', error);
     return [];
   }
-
-  return data || [];
 }
 
 export default async function GalleryPage() {

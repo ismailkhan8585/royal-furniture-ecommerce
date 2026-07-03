@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Heart, Trash2, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/currency';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 interface WishlistItem {
   productId: string;
@@ -149,10 +150,13 @@ export default function WishlistPage() {
                 className="bg-white dark:bg-walnut-950 rounded-xl overflow-hidden border border-walnut-100 dark:border-walnut-800 shadow-sm"
               >
                 <Link href={`/products/${item.slug}`}>
-                  <img
+                  <SafeImage
                     src={item.productPhoto}
                     alt={item.productName}
-                    className="w-full aspect-square object-cover"
+                    width={600}
+                    height={600}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    className="aspect-square w-full object-cover"
                   />
                 </Link>
 

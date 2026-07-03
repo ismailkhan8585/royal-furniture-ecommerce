@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { orderTrackingSchema, OrderTrackingFormData } from '@/lib/validations';
@@ -19,9 +18,10 @@ import {
   XCircle,
   MessageCircle,
 } from 'lucide-react';
-import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/lib/constants';
+import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 import { formatPrice } from '@/lib/currency';
 import { cn } from '@/lib/utils';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 interface OrderWithItems {
   id: string;
@@ -74,35 +74,22 @@ export default function TrackOrderPage() {
     setOrder(null);
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+      const response = await fetch('/api/orders/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
 
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Configuration error');
-      }
-
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
-      // Get order with matching order number AND phone number
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select(
-          `
-          *,
-          items:order_items(*)
-        `
-        )
-        .eq('order_number', data.orderNumber)
-        .eq('customer_phone', data.customerPhone)
-        .single();
-
-      if (orderError || !orderData) {
-        setError('No order found with these details. Please check your order number and phone number.');
-        setLoading(false);
+      if (!response.ok || !result.success) {
+        setError(
+          result.error ||
+            'No order found with these details. Please check your order number and phone number.'
+        );
         return;
       }
 
-      setOrder(orderData as unknown as OrderWithItems);
+      setOrder(result.data as OrderWithItems);
     } catch (err) {
       setError('Failed to lookup order. Please try again.');
     } finally {
@@ -320,10 +307,13 @@ export default function TrackOrderPage() {
                   {order.items?.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-4">
                       {item.product_photo && (
-                        <img
+                        <SafeImage
                           src={item.product_photo}
                           alt={item.product_name}
-                          className="w-16 h-16 rounded object-cover"
+                          width={64}
+                          height={64}
+                          sizes="64px"
+                          className="h-16 w-16 rounded object-cover"
                         />
                       )}
                       <div className="flex-1">

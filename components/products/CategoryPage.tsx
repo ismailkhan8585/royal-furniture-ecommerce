@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { Product } from '@/lib/database.types';
-import { Category } from '@/lib/types';
-import { CATEGORY_LABELS, CURRENCY_SYMBOL, MATERIALS } from '@/lib/constants';
+import { useRef, useState, useEffect } from 'react';
+import { Category, Product } from '@/lib/database.types';
+import { CATEGORY_LABELS, MATERIALS } from '@/lib/constants';
+import { CATEGORY_IMAGES } from '@/lib/media';
 import { ProductCard } from './ProductCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -18,11 +16,14 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { SlidersHorizontal } from 'lucide-react';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 interface CategoryPageProps {
-  category: Category;
+  category?: Category;
+  title?: string;
+  description?: string;
+  initialProducts?: Product[];
 }
 
 const SORT_OPTIONS = [
@@ -32,90 +33,75 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Price: High to Low' },
 ];
 
-export function CategoryPage({ category }: CategoryPageProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+export function CategoryPage({
+  category,
+  title,
+  description,
+  initialProducts = [],
+}: CategoryPageProps) {
+  const didHydrate = useRef(false);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [priceTypeFilter, setPriceTypeFilter] = useState<'ALL' | 'FIXED' | 'INQUIRY'>('ALL');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const pageSize = 24;
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-  // Fetch products
   useEffect(() => {
+    if (!didHydrate.current) {
+      didHydrate.current = true;
+      return;
+    }
+
+    const controller = new AbortController();
+
     async function fetchProducts() {
-      if (!supabaseUrl || !supabaseKey) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
-      const supabase = createClient(supabaseUrl, supabaseKey);
 
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true)
-        .eq('category', category);
+      try {
+        const params = new URLSearchParams({
+          sortBy,
+          priceType: priceTypeFilter,
+          inStockOnly: String(inStockOnly),
+          priceMin: String(priceRange[0]),
+          priceMax: String(priceRange[1]),
+        });
 
-      // Apply filters
-      if (priceTypeFilter !== 'ALL') {
-        query = query.eq('price_type', priceTypeFilter);
-      }
-
-      if (inStockOnly) {
-        query = query.eq('stock_type', 'IN_STOCK');
-      }
-
-      if (selectedMaterials.length > 0) {
-        query = query.in('material', selectedMaterials);
-      }
-
-      // Apply sorting
-      switch (sortBy) {
-        case 'newest':
-          query = query.order('created_at', { ascending: false });
-          break;
-        case 'price_asc':
-          query = query.order('price', { ascending: true, nullsFirst: false });
-          break;
-        case 'price_desc':
-          query = query.order('price', { ascending: false, nullsFirst: true });
-          break;
-        default:
-          query = query.order('featured', { ascending: false });
-      }
-
-      const { data, error } = await query.limit(100);
-
-      if (error) {
-        console.error('Error fetching products:', error);
-        setProducts([]);
-      } else {
-        // Filter by price range on client side (for fixed price items)
-        let filtered = data || [];
-        if (priceRange[0] > 0 || priceRange[1] < 500000) {
-          filtered = filtered.filter((p) => {
-            if (p.price_type === 'INQUIRY') return true; // Show inquiry items regardless
-            if (!p.price) return true;
-            return p.price >= priceRange[0] && p.price <= priceRange[1];
-          });
+        if (category) {
+          params.set('category', category);
         }
-        setProducts(filtered);
-      }
 
-      setLoading(false);
+        if (selectedMaterials.length > 0) {
+          params.set('materials', selectedMaterials.join(','));
+        }
+
+        const response = await fetch(`/api/products?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Failed to fetch products');
+        }
+
+        setProducts(result.data || []);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        setProducts([]);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
     }
 
     fetchProducts();
-  }, [category, sortBy, priceTypeFilter, inStockOnly, selectedMaterials, priceRange, supabaseUrl, supabaseKey]);
+
+    return () => controller.abort();
+  }, [category, sortBy, priceTypeFilter, inStockOnly, selectedMaterials, priceRange]);
 
   const toggleMaterial = (material: string) => {
     setSelectedMaterials((prev) =>
@@ -140,16 +126,36 @@ export function CategoryPage({ category }: CategoryPageProps) {
     priceTypeFilter !== 'ALL' ||
     inStockOnly;
 
+  const pageTitle = title || (category ? CATEGORY_LABELS[category] : 'All Furniture');
+  const pageDescription =
+    description ||
+    (category
+      ? `Explore our premium ${CATEGORY_LABELS[category].toLowerCase()} collection`
+      : 'Explore every Royal Furniture collection in one place');
+  const heroImage = category ? CATEGORY_IMAGES[category] : CATEGORY_IMAGES.LIVING_ROOM;
+
   return (
     <div className="min-h-screen bg-surface-secondary">
       {/* Header */}
-      <div className="bg-gradient-to-br from-walnut-800 to-walnut-900 text-white py-12">
-        <div className="container-wide">
+      <div className="relative overflow-hidden bg-walnut-900 py-14 text-white">
+        <SafeImage
+          src={heroImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-35"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-walnut-950 via-walnut-900/80 to-walnut-900/35" />
+        <div className="container-wide relative">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-gold-300">
+            Royal Furniture Collection
+          </p>
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-2">
-            {CATEGORY_LABELS[category]}
+            {pageTitle}
           </h1>
-          <p className="text-walnut-300 text-lg">
-            Explore our premium {CATEGORY_LABELS[category].toLowerCase()} collection
+          <p className="max-w-2xl text-walnut-200 text-lg">
+            {pageDescription}
           </p>
         </div>
       </div>
@@ -354,7 +360,7 @@ export function CategoryPage({ category }: CategoryPageProps) {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-columns-3 xl:grid-cols-4 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

@@ -9,12 +9,11 @@ import {
   Plus,
   Minus,
   ArrowRight,
-  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/currency';
-import { CURRENCY_SYMBOL, FREE_DELIVERY_THRESHOLD } from '@/lib/constants';
+import { FREE_DELIVERY_THRESHOLD } from '@/lib/constants';
+import { SafeImage } from '@/components/shared/SafeImage';
 import { toast } from 'sonner';
 
 interface CartItem {
@@ -154,10 +153,13 @@ export default function CartPage() {
                     href={`/products/${item.slug}`}
                     className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden"
                   >
-                    <img
+                    <SafeImage
                       src={item.productPhoto}
                       alt={item.productName}
-                      className="w-full h-full object-cover"
+                      width={96}
+                      height={96}
+                      sizes="96px"
+                      className="h-full w-full object-cover"
                     />
                   </Link>
 

@@ -32,11 +32,6 @@ const orderNumberSchema = z
   .string()
   .regex(/^ORD-\d{4}-\d{5}$/, 'Invalid order number format');
 
-// Custom request reference validation
-const customRequestRefSchema = z
-  .string()
-  .regex(/^CUS-\d{4}-\d{5}$/, 'Invalid custom request reference format');
-
 // Price validation
 const priceSchema = z
   .number()

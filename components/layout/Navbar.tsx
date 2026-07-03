@@ -9,10 +9,8 @@ import {
   ShoppingCart,
   MessageCircle,
   Menu,
-  X,
 } from 'lucide-react';
 import { Logo, LogoCompact } from '@/components/shared/Logo';
-import { CATEGORY_SLUGS, CATEGORY_LABELS, CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,11 +22,11 @@ import {
 } from '@/components/ui/sheet';
 
 const navigation = [
-  { name: 'Office Furniture', href: '/office-furniture', category: CATEGORIES.OFFICE },
-  { name: 'Living Room', href: '/living-room', category: CATEGORIES.LIVING_ROOM },
-  { name: 'Bedroom', href: '/bedroom', category: CATEGORIES.BEDROOM },
-  { name: 'Dining', href: '/dining', category: CATEGORIES.DINING },
-  { name: 'Custom Orders', href: '/custom-orders', category: CATEGORIES.CUSTOM },
+  { name: 'Office Furniture', href: '/office-furniture' },
+  { name: 'Living Room', href: '/living-room' },
+  { name: 'Bedroom', href: '/bedroom' },
+  { name: 'Dining', href: '/dining' },
+  { name: 'Custom Orders', href: '/custom-orders' },
 ];
 
 export function Navbar() {
@@ -39,26 +37,37 @@ export function Navbar() {
   const pathname = usePathname();
 
   useEffect(() => {
+    let frame = 0;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      if (frame) return;
+
+      frame = window.requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 20);
+        frame = 0;
+      });
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   useEffect(() => {
-    // Get wishlist count from localStorage
-    const updateWishlistCount = () => {
+    const updateCounts = () => {
       try {
         const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
         setWishlistCount(wishlist.length);
       } catch {
         setWishlistCount(0);
       }
-    };
 
-    // Get cart count from localStorage
-    const updateCartCount = () => {
       try {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]');
         setCartCount(cart.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0));
@@ -67,16 +76,16 @@ export function Navbar() {
       }
     };
 
-    updateWishlistCount();
-    updateCartCount();
+    updateCounts();
 
-    // Listen for storage events (for multi-tab sync)
-    window.addEventListener('storage', updateWishlistCount);
-    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('storage', updateCounts);
+    window.addEventListener('cartUpdated', updateCounts);
+    window.addEventListener('wishlistUpdated', updateCounts);
 
     return () => {
-      window.removeEventListener('storage', updateWishlistCount);
-      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('storage', updateCounts);
+      window.removeEventListener('cartUpdated', updateCounts);
+      window.removeEventListener('wishlistUpdated', updateCounts);
     };
   }, []);
 

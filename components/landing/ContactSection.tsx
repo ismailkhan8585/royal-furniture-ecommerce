@@ -1,6 +1,4 @@
-import Link from 'next/link';
 import { Phone, MessageCircle, Mail, MapPin, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { PHONE_NUMBER, EMAIL, ADDRESS, WHATSAPP_URL, WORKING_HOURS } from '@/lib/constants';
 
 export function ContactSection() {

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
 import { Product } from '@/lib/database.types';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -20,11 +19,8 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
   const performSearch = useCallback(async (searchQuery: string) => {
-    if (!searchQuery.trim() || !supabaseUrl || !supabaseKey) {
+    if (!searchQuery.trim()) {
       setResults([]);
       setSearched(false);
       return;
@@ -33,26 +29,23 @@ function SearchContent() {
     setLoading(true);
     setSearched(true);
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    try {
+      const params = new URLSearchParams({ search: searchQuery });
+      const response = await fetch(`/api/products?${params.toString()}`);
+      const result = await response.json();
 
-    // Search in product name and description
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('is_active', true)
-      .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,material.ilike.%${searchQuery}%,tags.cs.["${searchQuery}"]`)
-      .order('featured', { ascending: false })
-      .limit(50);
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Search failed');
+      }
 
-    if (error) {
+      setResults(result.data || []);
+    } catch (error) {
       console.error('Search error:', error);
       setResults([]);
-    } else {
-      setResults(data || []);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  }, [supabaseUrl, supabaseKey]);
+  }, []);
 
   useEffect(() => {
     if (initialQuery) {

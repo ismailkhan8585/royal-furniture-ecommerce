@@ -1,109 +1,131 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { Prisma } from '@prisma/client';
+import { z } from 'zod';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
+
+const orderItemSchema = z.object({
+  productId: z.string().uuid(),
+  productName: z.string().min(1),
+  productPhoto: z.string().min(1).nullable().optional(),
+  quantity: z.number().int().min(1).max(99),
+  unitPrice: z.number().min(0),
+});
+
+const createOrderSchema = z.object({
+  orderNumber: z
+    .string()
+    .regex(/^ORD-\d{4}-\d{5}$/)
+    .optional(),
+  customer: z.object({
+    name: z.string().min(2),
+    phone: z.string().min(10),
+    email: z.string().email().nullable().optional(),
+    address: z.string().min(10),
+    city: z.string().min(1),
+    area: z.string().nullable().optional(),
+  }),
+  payment: z.object({
+    method: z.enum(['COD', 'JAZZCASH', 'EASYPAISA', 'BANK_TRANSFER']),
+    screenshot: z.string().url().nullable().optional(),
+  }),
+  items: z.array(orderItemSchema).min(1),
+  deliveryFee: z.number().min(0),
+  subtotal: z.number().min(0),
+  total: z.number().min(0),
+  notes: z.string().nullable().optional(),
+});
+
+function generateOrderNumber() {
+  const year = new Date().getFullYear();
+  const random = Math.floor(Math.random() * 90000) + 10000;
+  return `ORD-${year}-${random}`;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const data = createOrderSchema.parse(await request.json());
 
-    const {
-      orderNumber,
-      customer,
-      payment,
-      items,
-      deliveryFee,
-      subtotal,
-      total,
-      notes,
-    } = body;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const orderNumber =
+        attempt === 0 && data.orderNumber ? data.orderNumber : generateOrderNumber();
 
-    // Get admin client
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      try {
+        const order = await prisma.order.create({
+          data: {
+            order_number: orderNumber,
+            customer_name: data.customer.name,
+            customer_phone: data.customer.phone,
+            customer_email: data.customer.email || null,
+            address: data.customer.address,
+            city: data.customer.city,
+            area: data.customer.area || null,
+            delivery_fee: data.deliveryFee,
+            subtotal: data.subtotal,
+            total_amount: data.total,
+            payment_method: data.payment.method,
+            payment_screenshot: data.payment.screenshot || null,
+            payment_status: 'UNPAID',
+            status: 'PENDING',
+            notes: data.notes || null,
+            items: {
+              create: data.items.map((item) => ({
+                product_id: item.productId,
+                product_name: item.productName,
+                product_photo: item.productPhoto || null,
+                quantity: item.quantity,
+                unit_price: item.unitPrice,
+                total_price: item.unitPrice * item.quantity,
+              })),
+            },
+          },
+          select: {
+            id: true,
+            order_number: true,
+          },
+        });
 
-    if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+        return NextResponse.json({
+          success: true,
+          data: {
+            order: {
+              id: order.id,
+              orderNumber: order.order_number,
+            },
+          },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          continue;
+        }
+
+        throw error;
+      }
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-
-    // Create order
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        order_number: orderNumber,
-        customer_name: customer.name,
-        customer_phone: customer.phone,
-        customer_email: customer.email,
-        address: customer.address,
-        city: customer.city,
-        area: customer.area,
-        delivery_fee: deliveryFee,
-        subtotal: subtotal,
-        total_amount: total,
-        payment_method: payment.method,
-        payment_screenshot: payment.screenshot,
-        payment_status: 'UNPAID',
-        status: 'PENDING',
-        notes: notes,
-      })
-      .select()
-      .single();
-
-    if (orderError || !order) {
-      console.error('Order creation error:', orderError);
-      return NextResponse.json(
-        { error: 'Failed to create order' },
-        { status: 500 }
-      );
-    }
-
-    // Create order items
-    const orderItems = items.map((item: {
-      productId: string;
-      productName: string;
-      productPhoto: string;
-      quantity: number;
-      unitPrice: number;
-    }) => ({
-      order_id: order.id,
-      product_id: item.productId,
-      product_name: item.productName,
-      product_photo: item.productPhoto,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      total_price: item.unitPrice * item.quantity,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      console.error('Order items error:', itemsError);
-      // Rollback order
-      await supabase.from('orders').delete().eq('id', order.id);
-      return NextResponse.json(
-        { error: 'Failed to create order items' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      order: {
-        id: order.id,
-        orderNumber: order.order_number,
-      },
-    });
+    return NextResponse.json(
+      { success: false, error: 'Failed to generate order number' },
+      { status: 500 }
+    );
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid order data',
+          details: error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
     console.error('Order API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Failed to create order' },
       { status: 500 }
     );
   }

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Heart, ShoppingCart, MessageCircle, Eye } from 'lucide-react';
 import { Product } from '@/lib/database.types';
 import { formatPrice } from '@/lib/currency';
-import { CURRENCY_SYMBOL } from '@/lib/constants';
+import { FALLBACK_IMAGE } from '@/lib/media';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -15,19 +15,40 @@ interface ProductCardProps {
   onQuickView?: (product: Product) => void;
 }
 
+let wishlistIdsCache: Set<string> | null = null;
+
+function getWishlistIds() {
+  if (wishlistIdsCache) {
+    return wishlistIdsCache;
+  }
+
+  try {
+    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    wishlistIdsCache = new Set(
+      wishlist.map((item: { productId: string }) => item.productId)
+    );
+  } catch {
+    wishlistIdsCache = new Set();
+  }
+
+  return wishlistIdsCache;
+}
+
+function invalidateWishlistCache() {
+  wishlistIdsCache = null;
+}
+
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [imageSrc, setImageSrc] = useState(product.photos[0] || FALLBACK_IMAGE);
 
   useEffect(() => {
-    // Check if product is in wishlist
-    try {
-      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      setIsWishlisted(wishlist.some((item: { productId: string }) => item.productId === product.id));
-    } catch {
-      setIsWishlisted(false);
-    }
+    setIsWishlisted(getWishlistIds().has(product.id));
   }, [product.id]);
+
+  useEffect(() => {
+    setImageSrc(product.photos[0] || FALLBACK_IMAGE);
+  }, [product.photos]);
 
   const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,6 +59,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       if (isWishlisted) {
         const newWishlist = wishlist.filter((item: { productId: string }) => item.productId !== product.id);
         localStorage.setItem('wishlist', JSON.stringify(newWishlist));
+        invalidateWishlistCache();
         setIsWishlisted(false);
       } else {
         wishlist.push({
@@ -50,12 +72,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           addedAt: new Date().toISOString(),
         });
         localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        invalidateWishlistCache();
         setIsWishlisted(true);
       }
       window.dispatchEvent(new Event('wishlistUpdated'));
-      window.dispatchEvent(new StorageEvent('storage'));
     } catch {
-      console.error('Failed to update wishlist');
+      setIsWishlisted(false);
     }
   };
 
@@ -84,9 +106,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
 
       localStorage.setItem('cart', JSON.stringify(cart));
       window.dispatchEvent(new Event('cartUpdated'));
-      window.dispatchEvent(new StorageEvent('storage'));
     } catch {
-      console.error('Failed to add to cart');
+      return;
     }
   };
 
@@ -99,7 +120,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   );
 
   return (
-    <div className="group relative bg-white dark:bg-walnut-950 rounded-xl overflow-hidden border border-walnut-100 dark:border-walnut-800 hover:shadow-lg transition-shadow duration-300">
+    <div className="group relative overflow-hidden rounded-lg border border-walnut-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-walnut-800 dark:bg-walnut-950">
       {/* Image Container */}
       <Link href={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden">
         {/* Category Badge */}
@@ -137,10 +158,13 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         )}
 
         {/* Product Image */}
-        <img
-          src={product.photos[0] || '/placeholder.png'}
+        <Image
+          src={imageSrc}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          fill
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 33vw, 50vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={() => setImageSrc(FALLBACK_IMAGE)}
         />
 
         {/* Stock Badge */}
@@ -164,14 +188,14 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       <div className="p-4">
         {/* Product Name */}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="font-medium text-walnut-800 dark:text-walnut-200 mb-1 line-clamp-2 hover:text-gold-600 transition-colors">
+          <h3 className="mb-1 min-h-[2.75rem] font-medium leading-snug text-walnut-800 transition-colors hover:text-gold-600 dark:text-walnut-200">
             {product.name}
           </h3>
         </Link>
 
         {/* Specs */}
         {product.material && (
-          <p className="text-sm text-walnut-500 dark:text-walnut-400 mb-2">
+          <p className="mb-2 min-h-[2.5rem] text-sm leading-snug text-walnut-500 dark:text-walnut-400">
             {product.material}
             {product.dimensions && ` | ${product.dimensions}`}
           </p>

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MEDIA } from '@/lib/media';
 import { cn } from '@/lib/utils';
 
 const slides = [
@@ -13,7 +15,7 @@ const slides = [
     subtitle: 'Executive Chairs, Desks & More | Rs. 8,500 onwards',
     cta: 'Shop Office Furniture',
     href: '/office-furniture',
-    bg: 'bg-gradient-to-br from-walnut-800 via-walnut-900 to-walnut-950',
+    image: MEDIA.officeWorkspace,
     textColor: 'text-white',
     accent: 'text-gold-400',
   },
@@ -23,9 +25,9 @@ const slides = [
     subtitle: '7-Seater Sets Starting Rs. 65,000',
     cta: 'Shop Living Room',
     href: '/living-room',
-    bg: 'bg-gradient-to-br from-amber-50 via-surface-secondary to-gold-50',
-    textColor: 'text-walnut-800',
-    accent: 'text-gold-600',
+    image: MEDIA.livingRoom,
+    textColor: 'text-white',
+    accent: 'text-gold-400',
   },
   {
     id: 3,
@@ -33,7 +35,7 @@ const slides = [
     subtitle: 'Custom-Made, Delivered Across Pakistan',
     cta: 'Request Custom Order',
     href: '/custom-orders',
-    bg: 'bg-gradient-to-br from-walnut-700 via-walnut-800 to-walnut-900',
+    image: MEDIA.receptionDesk,
     textColor: 'text-white',
     accent: 'text-gold-400',
   },
@@ -64,14 +66,13 @@ export function HeroSlider() {
   };
 
   return (
-    <section className="relative h-[70vh] min-h-[500px] max-h-[800px] overflow-hidden">
+    <section className="relative h-[70vh] min-h-[520px] max-h-[820px] overflow-hidden bg-walnut-900">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
           key={slide.id}
           className={cn(
             'absolute inset-0 transition-all duration-700 ease-in-out',
-            slide.bg,
             index === currentSlide
               ? 'opacity-100 translate-x-0'
               : index < currentSlide
@@ -79,12 +80,25 @@ export function HeroSlider() {
                 : 'opacity-0 translate-x-full'
           )}
         >
-          <div className="absolute inset-0 hero-pattern opacity-10" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="container-wide text-center px-4">
+          <Image
+            src={slide.image}
+            alt=""
+            fill
+            priority={index === 0}
+            sizes="100vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-walnut-950/90 via-walnut-900/65 to-walnut-950/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-walnut-950/55 via-transparent to-transparent" />
+          <div className="absolute inset-0 flex items-center">
+            <div className="container-wide px-4">
+              <div className="max-w-3xl">
+                <p className={cn('mb-4 text-sm font-semibold uppercase tracking-[0.18em]', slide.accent)}>
+                  Royal Furniture
+                </p>
               <h1
                 className={cn(
-                  'font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-4 animate-fade-in',
+                  'font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-4 animate-fade-in leading-tight',
                   slide.textColor
                 )}
               >
@@ -92,7 +106,7 @@ export function HeroSlider() {
               </h1>
               <p
                 className={cn(
-                  'text-lg md:text-xl mb-8 max-w-2xl mx-auto',
+                  'text-lg md:text-xl mb-8 max-w-2xl',
                   slide.textColor,
                   'opacity-90'
                 )}
@@ -104,9 +118,7 @@ export function HeroSlider() {
                 size="lg"
                 className={cn(
                   'gap-2 text-lg px-8 py-6',
-                  slide.textColor === 'text-white'
-                    ? 'bg-gold-500 text-walnut-900 hover:bg-gold-400'
-                    : 'bg-walnut-700 text-white hover:bg-walnut-800'
+                  'bg-gold-500 text-walnut-900 hover:bg-gold-400'
                 )}
               >
                 <Link href={slide.href}>
@@ -114,6 +126,7 @@ export function HeroSlider() {
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -125,7 +138,7 @@ export function HeroSlider() {
           prevSlide();
           setIsAutoPlaying(false);
         }}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors flex items-center justify-center"
+        className="absolute left-4 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30 md:flex"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-6 h-6" />
@@ -135,7 +148,7 @@ export function HeroSlider() {
           nextSlide();
           setIsAutoPlaying(false);
         }}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors flex items-center justify-center"
+        className="absolute right-4 top-1/2 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/30 md:flex"
         aria-label="Next slide"
       >
         <ChevronRight className="w-6 h-6" />

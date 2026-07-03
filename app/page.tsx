@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import {
   HeroSlider,
   TrustBadges,
@@ -11,49 +10,40 @@ import {
   Testimonials,
   ContactSection,
 } from '@/components/landing';
+import { prisma } from '@/lib/prisma';
+import { serializeProduct } from '@/lib/db-serializers';
 
-// Create Supabase client for server-side data fetching
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+export const dynamic = 'force-dynamic';
 
 async function getProducts() {
-  if (!supabaseUrl || !supabaseKey) {
+  try {
+    const [featured, newProducts, officeProducts] = await Promise.all([
+      prisma.product.findMany({
+        where: { is_active: true, featured: true },
+        orderBy: { created_at: 'desc' },
+        take: 12,
+      }),
+      prisma.product.findMany({
+        where: { is_active: true },
+        orderBy: { created_at: 'desc' },
+        take: 8,
+      }),
+      prisma.product.findMany({
+        where: { is_active: true, category: 'OFFICE' },
+        orderBy: { created_at: 'desc' },
+        take: 6,
+      }),
+    ]);
+
+    return {
+      featured: featured.map(serializeProduct),
+      new: newProducts.map(serializeProduct),
+      office: officeProducts.map(serializeProduct),
+    };
+  } catch (error) {
+    console.error('Failed to fetch homepage products:', error);
     return { featured: [], new: [], office: [] };
   }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  // Fetch featured products
-  const { data: featured } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .eq('featured', true)
-    .order('created_at', { ascending: false })
-    .limit(12);
-
-  // Fetch new arrivals
-  const { data: newProducts } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(8);
-
-  // Fetch office furniture
-  const { data: officeProducts } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .eq('category', 'OFFICE')
-    .order('created_at', { ascending: false })
-    .limit(6);
-
-  return {
-    featured: featured || [],
-    new: newProducts || [],
-    office: officeProducts || [],
-  };
 }
 
 export default async function HomePage() {
@@ -61,34 +51,15 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero Slider */}
       <HeroSlider />
-
-      {/* Trust Badges */}
       <TrustBadges />
-
-      {/* Featured Categories */}
       <FeaturedCategories />
-
-      {/* Bestsellers */}
       <Bestsellers products={products.featured} />
-
-      {/* Office Furniture Spotlight */}
       <OfficeSpotlight products={products.office} />
-
-      {/* New Arrivals */}
       <NewArrivals products={products.new} />
-
-      {/* Why Choose Us */}
       <WhyChooseUs />
-
-      {/* Custom Order Banner */}
       <CustomOrderBanner />
-
-      {/* Testimonials */}
       <Testimonials />
-
-      {/* Contact Section */}
       <ContactSection />
     </>
   );

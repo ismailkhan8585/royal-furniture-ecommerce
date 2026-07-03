@@ -1,17 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadImage, UploadType } from '@/lib/cloudinary';
+import { CLOUDINARY_FOLDERS, uploadImage, UploadType } from '@/lib/cloudinary';
 import { validateImage } from '@/lib/cloudinary';
+
+const validUploadTypes = new Set<UploadType>(
+  Object.keys(CLOUDINARY_FOLDERS) as UploadType[]
+);
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const type = formData.get('type') as UploadType | null;
+    const typeValue = formData.get('type');
     const id = formData.get('id') as string | null;
 
-    if (!file || !type) {
+    if (!file || typeof typeValue !== 'string') {
       return NextResponse.json(
-        { error: 'File and type are required' },
+        { success: false, error: 'File and type are required' },
+        { status: 400 }
+      );
+    }
+
+    const type = typeValue as UploadType;
+
+    if (!validUploadTypes.has(type)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid upload type' },
         { status: 400 }
       );
     }
@@ -19,7 +32,10 @@ export async function POST(request: NextRequest) {
     // Validate image
     const validation = validateImage(file);
     if (!validation.valid) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: validation.error },
+        { status: 400 }
+      );
     }
 
     // Convert file to base64
@@ -35,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     if (!result) {
       return NextResponse.json(
-        { error: 'Failed to upload image' },
+        { success: false, error: 'Failed to upload image' },
         { status: 500 }
       );
     }
@@ -48,7 +64,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { GalleryImage } from '@/lib/database.types';
 import { Button } from '@/components/ui/button';
-import { Image, MessageCircle, X } from 'lucide-react';
+import { Image as ImageIcon, MessageCircle, X } from 'lucide-react';
 import { CATEGORY_LABELS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 interface GalleryClientProps {
   images: GalleryImage[];
@@ -28,7 +29,7 @@ export function GalleryClient({ images }: GalleryClientProps) {
       <div className="bg-gradient-to-br from-walnut-800 to-walnut-900 text-white py-12">
         <div className="container-wide">
           <div className="flex items-center gap-3 mb-2">
-            <Image className="w-8 h-8 text-gold-400" />
+            <ImageIcon className="w-8 h-8 text-gold-400" />
             <h1 className="font-display text-4xl md:text-5xl font-bold">
               Gallery
             </h1>
@@ -61,7 +62,7 @@ export function GalleryClient({ images }: GalleryClientProps) {
         {/* Masonry Grid */}
         {filteredImages.length === 0 ? (
           <div className="text-center py-16">
-            <Image className="w-16 h-16 text-walnut-300 mx-auto mb-4" />
+            <ImageIcon className="w-16 h-16 text-walnut-300 mx-auto mb-4" />
             <p className="text-walnut-500">No images in this category yet</p>
           </div>
         ) : (
@@ -69,15 +70,18 @@ export function GalleryClient({ images }: GalleryClientProps) {
             {filteredImages.map((image) => (
               <div
                 key={image.id}
-                className="break-inside-avoid relative group cursor-pointer"
+                className="break-inside-avoid relative group cursor-pointer overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-walnut-900/5"
                 onClick={() => setSelectedImage(image)}
               >
-                <img
+                <SafeImage
                   src={image.image_url}
                   alt={image.caption || 'Gallery image'}
-                  className="w-full rounded-xl"
+                  width={800}
+                  height={1000}
+                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                  className="h-auto w-full transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="text-white text-sm font-medium">View</span>
                 </div>
               </div>
@@ -115,10 +119,13 @@ export function GalleryClient({ images }: GalleryClientProps) {
           >
             <X className="w-6 h-6" />
           </button>
-          <img
+          <SafeImage
             src={selectedImage.image_url}
             alt={selectedImage.caption || 'Gallery image'}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            width={1600}
+            height={1000}
+            sizes="100vw"
+            className="max-h-[90vh] w-auto max-w-full object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
           {selectedImage.caption && (

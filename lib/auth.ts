@@ -1,39 +1,15 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { createClient } from '@supabase/supabase-js';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import bcrypt from 'bcryptjs';
+import { prisma } from './prisma';
 import {
-  MAX_LOGIN_ATTEMPTS,
   LOCKOUT_DURATION_MINUTES,
+  MAX_LOGIN_ATTEMPTS,
 } from './constants';
 
-import bcrypt from 'bcryptjs';
-
-// Admin type for database operations
-interface AdminRow {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  is_active: boolean;
-  last_login_at: string | null;
-  login_attempts: number;
-  locked_until: string | null;
-  created_at: string;
-}
-
-// Create admin client inline to avoid type issues
-function getAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceKey) return null;
-
-  return createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
-}
-
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Admin Login',
@@ -53,95 +29,78 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const adminClient = getAdminClient();
-        if (!adminClient) {
-          console.error('Supabase admin client not available');
+        const email = credentials.email.toLowerCase();
+        const admin = await prisma.admin.findUnique({
+          where: { email },
+        });
+
+        if (!admin) {
           return null;
         }
 
-        // Look up admin by email
-        const { data: admin, error } = await adminClient
-          .from('admins')
-          .select('*')
-          .eq('email', credentials.email.toLowerCase())
-          .single();
-
-        if (error || !admin) {
-          console.error('Admin not found');
-          return null;
-        }
-
-        const adminData = admin as AdminRow;
-
-        // Check if account is locked
-        if (adminData.locked_until && new Date(adminData.locked_until) > new Date()) {
+        if (admin.locked_until && admin.locked_until > new Date()) {
           const remainingMinutes = Math.ceil(
-            (new Date(adminData.locked_until).getTime() - Date.now()) / 60000
+            (admin.locked_until.getTime() - Date.now()) / 60000
           );
           throw new Error(
             `Account locked. Try again in ${remainingMinutes} minutes.`
           );
         }
 
-        // Check if admin is active
-        if (!adminData.is_active) {
+        if (!admin.is_active) {
           throw new Error('Account is disabled. Contact support.');
         }
 
-        // Verify password
         const isValidPassword = await bcrypt.compare(
           credentials.password,
-          adminData.password
+          admin.password
         );
 
         if (!isValidPassword) {
-          // Increment login attempts
-          const newAttempts = adminData.login_attempts + 1;
+          const newAttempts = admin.login_attempts + 1;
 
-          // Lock account if max attempts reached
           if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
-            const lockoutTime = new Date();
-            lockoutTime.setMinutes(
-              lockoutTime.getMinutes() + LOCKOUT_DURATION_MINUTES
+            const lockedUntil = new Date();
+            lockedUntil.setMinutes(
+              lockedUntil.getMinutes() + LOCKOUT_DURATION_MINUTES
             );
 
-            await adminClient
-              .from('admins')
-              .update({
+            await prisma.admin.update({
+              where: { id: admin.id },
+              data: {
                 login_attempts: newAttempts,
-                locked_until: lockoutTime.toISOString(),
-              })
-              .eq('id', adminData.id);
+                locked_until: lockedUntil,
+              },
+            });
 
             throw new Error(
               `Too many failed attempts. Account locked for ${LOCKOUT_DURATION_MINUTES} minutes.`
             );
           }
 
-          await adminClient
-            .from('admins')
-            .update({ login_attempts: newAttempts })
-            .eq('id', adminData.id);
+          await prisma.admin.update({
+            where: { id: admin.id },
+            data: { login_attempts: newAttempts },
+          });
 
           throw new Error(
             `Invalid credentials. ${MAX_LOGIN_ATTEMPTS - newAttempts} attempts remaining.`
           );
         }
 
-        // Reset login attempts and update last login
-        await adminClient
-          .from('admins')
-          .update({
+        await prisma.admin.update({
+          where: { id: admin.id },
+          data: {
             login_attempts: 0,
             locked_until: null,
-            last_login_at: new Date().toISOString(),
-          })
-          .eq('id', adminData.id);
+            last_login_at: new Date(),
+          },
+        });
 
         return {
-          id: adminData.id,
-          email: adminData.email,
-          name: adminData.name,
+          id: admin.id,
+          email: admin.email,
+          name: admin.name,
         };
       },
     }),
@@ -170,8 +129,8 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours
-    updateAge: 60 * 60, // Update every hour
+    maxAge: 24 * 60 * 60,
+    updateAge: 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET || 'development-secret-change-in-production',
   debug: process.env.NODE_ENV === 'development',

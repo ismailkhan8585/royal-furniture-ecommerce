@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckoutFormData, checkoutFormSchema } from '@/lib/validations';
 import { PAKISTANI_CITIES, DELIVERY_FEES, FREE_DELIVERY_THRESHOLD, PAYMENT_METHOD_LABELS } from '@/lib/constants';
-import { formatPrice, calculateDeliveryFee } from '@/lib/currency';
+import { formatPrice } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,13 +22,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChevronLeft,
   ChevronRight,
-  CreditCard,
   Banknote,
   Smartphone,
   Building2,
-  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SafeImage } from '@/components/shared/SafeImage';
 
 const paymentMethods = [
   {
@@ -70,7 +69,6 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(1);
   const [items, setItems] = useState<CartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
   const router = useRouter();
 
   const {
@@ -116,12 +114,6 @@ export default function CheckoutPage() {
   const deliveryFee = qualifiesForFreeDelivery ? 0 : (DELIVERY_FEES[selectedCity] || 1500);
   const total = subtotal + deliveryFee;
 
-  const generateOrderNumber = () => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 90000) + 10000;
-    return `ORD-${year}-${random}`;
-  };
-
   const onSubmit = async (data: CheckoutFormData) => {
     if (step < 3) {
       setStep(step + 1);
@@ -131,14 +123,10 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      const orderNumber = generateOrderNumber();
-
-      // Create order via API
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderNumber,
           customer: {
             name: data.customerName,
             phone: data.customerPhone,
@@ -164,10 +152,13 @@ export default function CheckoutPage() {
           notes: data.notes || null,
         }),
       });
+      const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error('Failed to create order');
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to create order');
       }
+
+      const orderNumber = result.data.order.orderNumber;
 
       // Clear cart
       localStorage.setItem('cart', JSON.stringify([]));
@@ -364,7 +355,12 @@ export default function CheckoutPage() {
                             type="radio"
                             value={method.value}
                             checked={selectedPayment === method.value}
-                            onChange={() => setValue('paymentMethod', method.value as any)}
+                            onChange={() =>
+                              setValue(
+                                'paymentMethod',
+                                method.value as CheckoutFormData['paymentMethod']
+                              )
+                            }
                             className="mt-1"
                           />
                           <div>
@@ -458,10 +454,13 @@ export default function CheckoutPage() {
                     </h3>
                     {items.map((item) => (
                       <div key={item.productId} className="flex items-center gap-3 py-2">
-                        <img
+                        <SafeImage
                           src={item.productPhoto}
                           alt={item.productName}
-                          className="w-12 h-12 rounded object-cover"
+                          width={48}
+                          height={48}
+                          sizes="48px"
+                          className="h-12 w-12 rounded object-cover"
                         />
                         <div className="flex-1">
                           <p className="text-walnut-700 dark:text-walnut-300 text-sm line-clamp-1">

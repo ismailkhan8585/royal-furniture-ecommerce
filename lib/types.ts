@@ -1,4 +1,4 @@
-// Database types matching Prisma schema
+﻿// Database types matching Prisma schema
 
 // Enums
 export type Category =

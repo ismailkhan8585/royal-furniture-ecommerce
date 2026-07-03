@@ -1,12 +1,14 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Ruler } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MEDIA } from '@/lib/media';
 
 export function CustomOrderBanner() {
   return (
     <section className="py-12 lg:py-16 bg-gradient-to-r from-gold-50 via-surface-secondary to-gold-50">
       <div className="container-wide">
-        <div className="flex flex-col md:flex-row items-center gap-8 p-8 lg:p-12 rounded-2xl bg-white dark:bg-walnut-900 border border-gold-200 dark:border-gold-800 shadow-lg">
+        <div className="flex flex-col items-center gap-8 rounded-lg border border-gold-200 bg-white p-6 shadow-lg dark:border-gold-800 dark:bg-walnut-900 md:flex-row lg:p-10">
           <div className="flex-1 text-center md:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-100 dark:bg-gold-900 text-gold-700 dark:text-gold-300 text-sm font-medium mb-4">
               <Ruler className="w-4 h-4" />
@@ -27,11 +29,15 @@ export function CustomOrderBanner() {
             </Link>
           </div>
           <div className="flex-shrink-0 w-full md:w-auto">
-            <img
-              src="https://images.pexels.com/photos/262508/pexels-photo-262508.jpeg?w=400"
-              alt="Custom furniture"
-              className="w-full md:w-80 h-64 object-cover rounded-xl shadow-md"
-            />
+            <div className="relative h-64 w-full overflow-hidden rounded-lg shadow-md md:w-80">
+              <Image
+                src={MEDIA.receptionDesk}
+                alt="Custom reception desk and made-to-order furniture"
+                fill
+                sizes="(min-width: 768px) 320px, 100vw"
+                className="object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>

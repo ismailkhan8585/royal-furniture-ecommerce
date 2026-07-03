@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Crown, Facebook, Instagram, Music2, Phone, Mail, MapPin } from 'lucide-react';
-import { Logo } from '@/components/shared/Logo';
 import { BUSINESS_NAME, SOCIAL_URLS, EMAIL, ADDRESS, PHONE_NUMBER } from '@/lib/constants';
 
 const shopLinks = [
@@ -34,7 +33,7 @@ export function Footer() {
     <footer className="bg-walnut-900 text-walnut-100">
       {/* Main Footer */}
       <div className="container-wide py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
@@ -123,6 +122,23 @@ export function Footer() {
             </ul>
           </div>
 
+          {/* Company Column */}
+          <div>
+            <h3 className="font-display font-semibold text-white text-lg mb-4">Company</h3>
+            <ul className="space-y-3">
+              {companyLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-walnut-400 hover:text-gold-400 transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Contact Column */}
           <div>
             <h3 className="font-display font-semibold text-white text-lg mb-4">Contact</h3>
@@ -168,7 +184,6 @@ export function Footer() {
             </p>
             <p className="text-walnut-500 text-sm flex items-center gap-1">
               Made with <span className="text-red-400">&#10084;</span> in Pakistan
-              <span className="ml-1">🇵🇰</span>
             </p>
           </div>
         </div>
