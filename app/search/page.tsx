@@ -113,7 +113,7 @@ function SearchContent() {
         )}
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="product-grid">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-4">
                 <Skeleton className="aspect-square rounded-xl" />
@@ -146,7 +146,7 @@ function SearchContent() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="product-grid">
             {results.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

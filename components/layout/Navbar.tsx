@@ -129,7 +129,7 @@ export function Navbar() {
             {/* Search */}
             <Link
               href="/search"
-              className="p-2 rounded-lg text-walnut-600 hover:text-walnut-800 hover:bg-walnut-50 dark:text-walnut-400 dark:hover:text-walnut-200 dark:hover:bg-walnut-900 transition-colors"
+              className="hidden lg:flex p-2 rounded-lg text-walnut-600 hover:text-walnut-800 hover:bg-walnut-50 dark:text-walnut-400 dark:hover:text-walnut-200 dark:hover:bg-walnut-900 transition-colors"
             >
               <Search className="w-5 h-5" />
               <span className="sr-only">Search</span>
@@ -138,7 +138,7 @@ export function Navbar() {
             {/* Wishlist */}
             <Link
               href="/wishlist"
-              className="relative p-2 rounded-lg text-walnut-600 hover:text-walnut-800 hover:bg-walnut-50 dark:text-walnut-400 dark:hover:text-walnut-200 dark:hover:bg-walnut-900 transition-colors"
+              className="hidden lg:flex relative p-2 rounded-lg text-walnut-600 hover:text-walnut-800 hover:bg-walnut-50 dark:text-walnut-400 dark:hover:text-walnut-200 dark:hover:bg-walnut-900 transition-colors"
             >
               <Heart className="w-5 h-5" />
               {wishlistCount > 0 && (
@@ -152,7 +152,7 @@ export function Navbar() {
             {/* Cart */}
             <Link
               href="/cart"
-              className="relative p-2 rounded-lg text-walnut-600 hover:text-walnut-800 hover:bg-walnut-50 dark:text-walnut-400 dark:hover:text-walnut-200 dark:hover:bg-walnut-900 transition-colors"
+              className="hidden lg:flex relative p-2 rounded-lg text-walnut-600 hover:text-walnut-800 hover:bg-walnut-50 dark:text-walnut-400 dark:hover:text-walnut-200 dark:hover:bg-walnut-900 transition-colors"
             >
               <ShoppingCart className="w-5 h-5" />
               {cartCount > 0 && (
@@ -163,16 +163,7 @@ export function Navbar() {
               <span className="sr-only">Cart</span>
             </Link>
 
-            {/* WhatsApp */}
-            <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/[^0-9]/g, '') || '923001234567'}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:flex p-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span className="sr-only">WhatsApp</span>
-            </a>
+
 
             {/* Mobile menu button */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

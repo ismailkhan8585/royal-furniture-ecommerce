@@ -120,12 +120,12 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
   );
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-walnut-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-walnut-800 dark:bg-walnut-950">
+    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-walnut-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-walnut-800 dark:bg-walnut-950">
       {/* Image Container */}
       <Link href={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden">
         {/* Category Badge */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className="px-2 py-1 text-xs font-medium bg-walnut-700 text-white rounded-full">
+        <div className="absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
+          <span className="block max-w-[calc(100vw-5rem)] truncate rounded-full bg-walnut-700 px-2 py-1 text-[10px] font-medium uppercase leading-none text-white min-[420px]:max-w-[7rem] sm:max-w-[9rem] sm:text-xs">
             {product.category.replace('_', ' ')}
           </span>
         </div>
@@ -133,7 +133,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
         {/* Wishlist Button */}
         <button
           onClick={toggleWishlist}
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center transition-colors hover:bg-white"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 backdrop-blur-sm transition-colors hover:bg-white sm:right-3 sm:top-3"
         >
           <Heart
             className={cn(
@@ -151,7 +151,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
               e.stopPropagation();
               onQuickView(product);
             }}
-            className="absolute top-14 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center transition-colors hover:bg-white opacity-0 group-hover:opacity-100"
+            className="absolute right-2 top-12 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/85 opacity-0 backdrop-blur-sm transition-colors hover:bg-white group-hover:opacity-100 sm:right-3 sm:top-14"
           >
             <Eye className="w-4 h-4 text-walnut-600" />
           </button>
@@ -162,7 +162,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           src={imageSrc}
           alt={product.name}
           fill
-          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 33vw, 50vw"
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 33vw, (min-width: 420px) 50vw, 100vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           onError={() => setImageSrc(FALLBACK_IMAGE)}
         />
@@ -176,8 +176,8 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </div>
         )}
         {isMadeToOrder && (
-          <div className="absolute bottom-3 left-3 z-10">
-            <span className="px-2 py-1 text-xs font-medium bg-amber-500 text-walnut-900 rounded-full">
+          <div className="absolute bottom-2 left-2 z-10 sm:bottom-3 sm:left-3">
+            <span className="block max-w-[9rem] truncate rounded-full bg-amber-500 px-2 py-1 text-[10px] font-medium leading-none text-walnut-900 sm:text-xs">
               Made to Order
             </span>
           </div>
@@ -185,53 +185,53 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
       </Link>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         {/* Product Name */}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="mb-1 min-h-[2.75rem] font-medium leading-snug text-walnut-800 transition-colors hover:text-gold-600 dark:text-walnut-200">
+          <h3 className="mb-1 line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-snug text-walnut-800 transition-colors hover:text-gold-600 dark:text-walnut-200 sm:min-h-[2.75rem] sm:text-base">
             {product.name}
           </h3>
         </Link>
 
         {/* Specs */}
         {product.material && (
-          <p className="mb-2 min-h-[2.5rem] text-sm leading-snug text-walnut-500 dark:text-walnut-400">
+          <p className="mb-2 line-clamp-2 min-h-[2.25rem] text-xs leading-snug text-walnut-500 dark:text-walnut-400 sm:min-h-[2.5rem] sm:text-sm">
             {product.material}
             {product.dimensions && ` | ${product.dimensions}`}
           </p>
         )}
 
         {/* Price */}
-        <div className="mb-3">
+        <div className="mb-3 min-w-0">
           {isFixedPrice && product.price ? (
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-walnut-700 dark:text-gold-400">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="text-lg font-bold leading-tight text-walnut-700 dark:text-gold-400 sm:text-xl">
                 {formatPrice(product.price)}
               </span>
               {product.compare_price && product.compare_price > product.price && (
-                <span className="text-sm text-walnut-400 line-through">
+                <span className="text-xs text-walnut-400 line-through sm:text-sm">
                   {formatPrice(product.compare_price)}
                 </span>
               )}
             </div>
           ) : (
-            <span className="px-2 py-1 text-sm font-medium bg-gold-100 text-gold-700 rounded-full">
+            <span className="inline-flex max-w-full rounded-full bg-gold-100 px-2 py-1 text-xs font-medium text-gold-700 sm:text-sm">
               Price on Inquiry
             </span>
           )}
         </div>
 
         {/* Stock Status */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="mb-3 flex min-h-[1.25rem] items-center gap-2">
           {isInStock && (
-            <span className="flex items-center gap-1 text-sm text-green-600">
-              <span className="w-2 h-2 bg-green-500 rounded-full" />
+            <span className="flex items-center gap-1 text-xs text-green-600 sm:text-sm">
+              <span className="h-2 w-2 flex-shrink-0 rounded-full bg-green-500" />
               In Stock
             </span>
           )}
           {isMadeToOrder && (
-            <span className="flex items-center gap-1 text-sm text-amber-600">
-              <span className="w-2 h-2 bg-amber-500 rounded-full" />
+            <span className="flex items-center gap-1 text-xs text-amber-600 sm:text-sm">
+              <span className="h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
               Made to Order
             </span>
           )}
@@ -242,21 +242,21 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           <Button
             onClick={addToCart}
             disabled={!isInStock && !isMadeToOrder}
-            className="w-full gap-2 bg-walnut-600 hover:bg-walnut-700 text-white"
+            className="mt-auto w-full gap-1.5 px-2 text-xs bg-walnut-600 hover:bg-walnut-700 text-white sm:gap-2 sm:px-4 sm:text-sm"
           >
-            <ShoppingCart className="w-4 h-4" />
-            Add to Cart
+            <ShoppingCart className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Add to Cart</span>
           </Button>
         ) : (
           <a
             href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/[^0-9]/g, '') || '923001234567'}?text=${whatsappText}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full"
+            className="mt-auto flex w-full"
           >
-            <Button className="w-full gap-2 bg-green-500 hover:bg-green-600 text-white">
-              <MessageCircle className="w-4 h-4" />
-              WhatsApp for Price
+            <Button className="mt-auto w-full gap-1.5 px-2 text-xs bg-green-500 hover:bg-green-600 text-white sm:gap-2 sm:px-4 sm:text-sm">
+              <MessageCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">WhatsApp for Price</span>
             </Button>
           </a>
         )}

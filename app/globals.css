@@ -146,6 +146,18 @@
   .container-wide {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+
+  .product-grid {
+    @apply grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6;
+  }
+
+  .product-grid-category {
+    @apply grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6;
+  }
+
+  .product-grid-compact {
+    @apply grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-6;
+  }
 }
 
 @layer utilities {

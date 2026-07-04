@@ -523,7 +523,7 @@ export function ProductDetail({
         {similarProducts.length > 0 && (
           <div className="mt-16">
             <h2 className="section-heading mb-6">Similar Products</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="product-grid-compact">
               {similarProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}

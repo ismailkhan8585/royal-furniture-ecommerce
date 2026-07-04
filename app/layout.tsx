@@ -98,7 +98,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Navbar />
-          <main className="min-h-screen pt-16 lg:pt-20 pb-16 lg:pb-0">
+          <main className="min-h-screen pt-16 pb-24 lg:pt-20 lg:pb-0">
             {children}
           </main>
           <Footer />

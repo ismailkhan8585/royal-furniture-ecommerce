@@ -31,7 +31,7 @@ export function Bestsellers({ products }: BestsellersProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="product-grid">
           {products.slice(0, 8).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -64,7 +64,7 @@ export function NewArrivals({ products }: BestsellersProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="product-grid">
           {products.slice(0, 8).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -102,7 +102,7 @@ export function OfficeSpotlight({ products }: BestsellersProps) {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="product-grid-compact">
           {products.slice(0, 6).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

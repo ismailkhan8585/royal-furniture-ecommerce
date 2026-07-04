@@ -342,7 +342,7 @@ export function CategoryPage({
 
             {/* Products Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+              <div className="product-grid-category">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="space-y-4">
                     <Skeleton className="aspect-square rounded-xl" />
@@ -360,7 +360,7 @@ export function CategoryPage({
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+              <div className="product-grid-category">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

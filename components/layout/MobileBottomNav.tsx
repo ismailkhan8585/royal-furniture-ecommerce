@@ -62,8 +62,8 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-walnut-950 border-t border-walnut-100 dark:border-walnut-800 lg:hidden">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-walnut-100 bg-white/95 shadow-[0_-8px_24px_rgba(38,24,14,0.08)] backdrop-blur-md [padding-bottom:env(safe-area-inset-bottom)] dark:border-walnut-800 dark:bg-walnut-950/95 lg:hidden">
+      <div className="flex h-16 items-center justify-around px-2">
         {navItems.map((item) => {
           const isActive =
             item.href === '/'
@@ -77,10 +77,10 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 h-full relative',
+                'relative flex h-full flex-1 flex-col items-center justify-center rounded-lg transition-colors',
                 isActive
-                  ? 'text-walnut-700 dark:text-gold-400'
-                  : 'text-walnut-500 dark:text-walnut-400'
+                  ? 'text-walnut-800 dark:text-gold-400'
+                  : 'text-walnut-500 hover:text-walnut-700 dark:text-walnut-400 dark:hover:text-walnut-200'
               )}
             >
               <div className="relative">
@@ -91,7 +91,7 @@ export function MobileBottomNav() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] mt-1 font-medium">{item.name}</span>
+              <span className="mt-1 text-[10px] font-medium leading-none">{item.name}</span>
               {isActive && (
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-walnut-600 dark:bg-gold-400 rounded-full" />
               )}
